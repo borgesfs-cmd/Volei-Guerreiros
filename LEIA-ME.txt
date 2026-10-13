@@ -1,0 +1,16 @@
+VÔLEI DOS GUERREIROS · SITE
+© 2026 Flávio da Silva Borges. Todos os direitos reservados.
+
+Arquivos
+- index.html ............ o sistema inteiro
+- config.js ............. dados do seu projeto Firebase (preencher)
+- firestore.rules ....... regras de segurança do banco (colar no Firebase)
+- manifest.webmanifest, icon-*.png, sw.js ... ícone dos Guerreiros na tela do celular e abertura sem internet
+- preview.jpg ........... imagem que aparece quando o link é enviado no WhatsApp
+- firebase.json ......... só se for publicar pelo Firebase Hosting
+
+Como funciona
+- Qualquer pessoa abre o link e acompanha ao vivo, sem login.
+- Quem digita o CÓDIGO DE MESÁRIO marca pontos e organiza as duplas. Vários mesários podem editar a mesma pelada.
+- O CÓDIGO DO ADMINISTRADOR libera também o relatório de uso, apagar peladas e trocar os códigos.
+- No primeiro acesso depois de publicar, o site pede para você criar os dois códigos.

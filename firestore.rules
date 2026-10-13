@@ -1,0 +1,59 @@
+rules_version = '2';
+// Vôlei dos Guerreiros · regras do banco de dados
+// Todos leem as peladas. Só quem tem o código de mesário grava. Só o administrador apaga e troca os códigos.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function g(gid) { return /databases/$(database)/documents/groups/$(gid); }
+    function secretPath(gid) { return /databases/$(database)/documents/groups/$(gid)/private/secret; }
+    function isAdmin(gid) { return signedIn() && exists(/databases/$(database)/documents/groups/$(gid)/admins/$(request.auth.uid)); }
+    function isEditor(gid) { return signedIn() && (isAdmin(gid) || exists(/databases/$(database)/documents/groups/$(gid)/editors/$(request.auth.uid))); }
+    function validCodes(d) {
+      return d.keys().hasOnly(['adminPin','editorPin'])
+        && d.adminPin is string && d.editorPin is string
+        && d.adminPin.size() >= 4 && d.editorPin.size() >= 4
+        && d.adminPin.size() <= 40 && d.editorPin.size() <= 40
+        && d.adminPin != d.editorPin;
+    }
+
+    match /groups/{gid} {
+      allow read: if true;
+      // primeira configuração: cria o grupo junto com os códigos e o administrador
+      allow create: if signedIn()
+        && existsAfter(secretPath(gid))
+        && existsAfter(/databases/$(database)/documents/groups/$(gid)/admins/$(request.auth.uid));
+      allow update: if isAdmin(gid);
+
+      match /private/secret {
+        allow read: if false;
+        allow create: if signedIn() && !exists(g(gid)) && validCodes(request.resource.data);
+        allow update: if isAdmin(gid) && validCodes(request.resource.data);
+      }
+      match /admins/{u} {
+        allow get: if signedIn() && request.auth.uid == u;
+        allow create: if signedIn() && request.auth.uid == u
+          && request.resource.data.pin == getAfter(secretPath(gid)).data.adminPin;
+        allow delete: if signedIn() && request.auth.uid == u;
+      }
+      match /editors/{u} {
+        allow get: if signedIn() && (request.auth.uid == u || isAdmin(gid));
+        allow list: if isAdmin(gid);
+        allow create: if signedIn() && request.auth.uid == u
+          && (request.resource.data.pin == get(secretPath(gid)).data.editorPin
+              || request.resource.data.pin == get(secretPath(gid)).data.adminPin);
+        allow delete: if signedIn() && (request.auth.uid == u || isAdmin(gid));
+      }
+      match /peladas/{p} {
+        allow read: if true;
+        allow create, update: if isEditor(gid)
+          && request.resource.data.json is string
+          && request.resource.data.json.size() < 900000;
+        allow delete: if isAdmin(gid);
+      }
+      match /meta/{m} {
+        allow read: if true;
+        allow write: if isAdmin(gid);
+      }
+    }
+  }
+}
