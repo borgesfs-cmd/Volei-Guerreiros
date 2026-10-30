@@ -235,7 +235,7 @@ html:not([data-ui="noite"]){
   --warnbg:#FFF0C7; --warn:#7A4300; --warnline:#E0B860; --danger:#B42318;
   --court:#FFFFFF; --court-ink:#0B1633; --navbg:#FFFFFF; --hintbg:#FFF3D1; --title:#0B1633; --brandtxt:#8A5A00;
   --left:#1D4ED8; --leftbg:#EAF0FF; --right:#B42318; --rightbg:#FDECEA;
-  --nextbg:#0B1633; --nextpos:#FFC93C; --nextink:#FFFFFF; --btnshadow:rgba(11,22,51,.18);
+  --nextbg:#0B1633; --nextpos:#FFC93C; --nextink:#FFFFFF; --solobg:#7A4300; --soloink:#FFFFFF; --btnshadow:rgba(11,22,51,.18);
   color-scheme:light;
 }
 html[data-ui="noite"]{
@@ -246,7 +246,7 @@ html[data-ui="noite"]{
   --warnbg:#3a2a10; --warn:#FFD36B; --warnline:#8a6420; --danger:#FF8A6B;
   --court:#0B1633; --court-ink:#FFFFFF; --navbg:#040A18; --hintbg:#1a2a52; --title:#FFFFFF; --brandtxt:#FFC93C;
   --left:#6CB4FF; --leftbg:#10275A; --right:#FF8A6B; --rightbg:#3A1A1A;
-  --nextbg:#FFC93C; --nextpos:#1A1200; --nextink:#1A1200; --btnshadow:#02060f;
+  --nextbg:#FFC93C; --nextpos:#1A1200; --nextink:#1A1200; --solobg:#FFD36B; --soloink:#1A1200; --btnshadow:#02060f;
   color-scheme:dark;
 }
 html,body{background:var(--bg)!important}
@@ -276,10 +276,10 @@ nav button{font-size:.76rem;color:var(--muted)}
 .roster li:first-child:not(.solo){background:var(--nextbg)}
 .roster li:first-child:not(.solo) .pos{color:var(--nextpos)}
 .roster li:first-child:not(.solo) .who{color:var(--nextink);font-weight:700}
-.roster li.solo{background:var(--warnbg);border-top:2px dashed var(--warnline)}
-.roster li.solo .pos{color:var(--warn)!important;font-weight:700}
-.roster li.solo .who{color:var(--ink);font-weight:700}
-.roster li.solo{grid-template-columns:122px 1fr;row-gap:2px}.roster li.solo .tag{grid-column:2;justify-self:start}
+.roster li.solo{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:14px 12px;background:var(--surface);border-top:2px dashed var(--warnline)}
+.roster li.solo .badge{display:inline-block;padding:4px 14px;border-radius:999px;background:var(--solobg);color:var(--soloink);-webkit-text-fill-color:var(--soloink);font:800 .95rem var(--display);letter-spacing:.08em;text-transform:uppercase}
+.roster li.solo .who{font-weight:800;font-size:1.25rem;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.roster li.solo .hint{font-size:.88rem;color:var(--muted)}
 .roster .who{font-weight:600}
 .roster li{grid-template-columns:122px 1fr auto}
 .roster .pos{font-size:.95rem}
@@ -937,7 +937,7 @@ function renderGame(){
   $("switchBanner").textContent="Trocar de quadra! ("+(S.score[0]+S.score[1])+" pontos)"+(canWrite?" · toque para confirmar":"");
   let h=S.queue.map((id,i)=>'<li><span class="pos">'+(POS[i]||(i+1)+"ª da fila")+'</span><span class="who">'+esc(pName(id))+'</span>'+
     ((S.streak[id]||0)?'<span class="tag">'+S.streak[id]+' seguidas</span>':'<span></span>')+'</li>').join("");
-  if(S.solo)h+='<li class="solo"><span class="pos">Sozinho</span><span class="who">'+esc(S.solo)+'</span><span class="tag" style="background:var(--warnbg);color:var(--warn)">entra com a perdedora</span></li>';
+  if(S.solo)h+='<li class="solo"><span class="badge">🙋 Sozinho</span><span class="who">'+esc(S.solo)+'</span><span class="hint">Entra com quem perder a próxima partida</span></li>';
   $("queue").innerHTML=h||'<li><span class="pos">—</span><span class="who sub">Ninguém na fila. As mesmas duplas seguem jogando.</span><span></span></li>';
 }
 
