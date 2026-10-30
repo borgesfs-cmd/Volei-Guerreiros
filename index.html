@@ -201,6 +201,11 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .notes{display:flex;flex-direction:column;gap:6px;margin:0;padding-left:18px;font-size:.95rem}
 [hidden]{display:none!important}
 .hbtns{display:flex;gap:6px;justify-content:flex-end}
+.pname{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:6px 4px 0}
+.pname .k{font:700 .8rem var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.pname .v{font:400 2rem/1.1 var(--brand);color:var(--title);text-transform:uppercase;overflow-wrap:anywhere}
+.pname .v.none{font-size:1.4rem;color:var(--muted)}
+.pname .btn{margin-top:6px;width:auto;padding-left:18px;padding-right:18px}
 .audit{display:flex;flex-direction:column;gap:6px;border:2px solid var(--line);border-radius:14px;padding:12px;background:var(--surface);margin-bottom:10px}
 .auditTop{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-size:1.05rem;color:var(--ink)}
 .auditTop span{font-weight:700;color:var(--muted);white-space:nowrap}
@@ -457,6 +462,7 @@ td{font-weight:500}
 
   <!-- RANKING -->
   <div id="vRank" hidden style="display:flex;flex-direction:column;gap:18px">
+    <div class="pname" id="pnameBox"><span class="k">Ranking da pelada</span><span class="v" id="pnameTxt"></span><span class="sub" id="pnameSub"></span><button class="btn ghost small" id="pnameBtn" type="button" hidden></button></div>
     <div class="crown"><span class="k">Rei da pelada</span><span class="v" id="king">—</span><span class="sub" id="kingSub"></span></div>
     <div class="crown"><span class="k">Dupla da pelada</span><span class="v" id="duo">—</span><span class="sub" id="duoSub"></span></div>
     <div class="seal" id="auditSeal" hidden></div>
@@ -1125,9 +1131,9 @@ async function drawMatch(r,st){
 async function drawRanking(st){
   await fontsReady();
   const {rows,top,pr}=leaders(st);
-  const {cv,x}=cardBase(pTitle(st)+" · "+(st.history||[]).length+" partidas"+(auditInfo(st).all?" · ✅ auditado":""));
+  const {cv,x}=cardBase((st.name?"RANKING · ":"")+pTitle(st)+" · "+(st.history||[]).length+" partidas"+(auditInfo(st).all?" · ✅ auditado":""));
   x.textAlign="center";
-  x.font="400 54px "+BR;x.fillStyle=goldFill(x,380,54);x.fillText("RANKING DA PELADA",540,382);
+  const tt=st.name?st.name.toUpperCase():"RANKING DA PELADA";const tf=fitFont(x,tt,BR,400,54,30,900);x.font="400 "+tf+"px "+BR;x.fillStyle=goldFill(x,380,tf);x.fillText(tt,540,382);
   let y=420;x.fillStyle="#132448";rr(x,90,y,900,190,26);x.fill();x.strokeStyle="#9a6614";x.lineWidth=3;rr(x,90,y,900,190,26);x.stroke();
   x.fillStyle="#d8b07a";x.font="600 28px "+BD;x.fillText("👑  REI DA PELADA",540,y+50);
   const kn=top.length?top.map(r=>r.n).join(" e ").toUpperCase():"—";const ks=fitFont(x,kn,BR,400,64,36,840);x.font="400 "+ks+"px "+BR;x.fillStyle=goldFill(x,y+118,ks);x.fillText(kn,540,y+122);
@@ -1150,7 +1156,7 @@ function waText(kind,data,st){
   const link=inviteLink(curId||"");
   if(kind==="match")return "🏐 Vôlei dos Guerreiros · "+pTitle(st)+"\n\n🏆 "+data.winner+" venceram "+data.score+"!\n"+data.congrats+(data.streak>1?"\n🔥 "+data.streak+" vitórias seguidas":"")+"\n\n🤡 Zoação para "+data.loser+":\n"+data.tease+"\n\n👉 "+link;
   const {rows,top,pr}=leaders(st);
-  return "🏐 Vôlei dos Guerreiros · "+pTitle(st)+"\n🏅 RANKING DA PELADA"+(auditInfo(st).all?" · ✅ auditado":"")+"\n\n👑 Rei: "+(top.length?top.map(r=>r.n).join(" e ")+" ("+top[0].w+" vitórias)":"—")+"\n🤝 Dupla: "+(pr.length?pr[0][0]+" ("+pr[0][1].w+" vitórias)":"—")+"\n\n"+rows.slice(0,10).map((r,i)=>(["🥇","🥈","🥉"][i]||(i+1)+".")+" "+r.n+" · "+r.w+"V "+r.l+"D · saldo "+sg(r.bal)).join("\n")+"\n\n👉 "+link;
+  return "🏐 Vôlei dos Guerreiros · "+pTitle(st)+"\n🏅 RANKING"+(st.name?" · "+st.name.toUpperCase():" DA PELADA")+(auditInfo(st).all?" · ✅ auditado":"")+"\n\n👑 Rei: "+(top.length?top.map(r=>r.n).join(" e ")+" ("+top[0].w+" vitórias)":"—")+"\n🤝 Dupla: "+(pr.length?pr[0][0]+" ("+pr[0][1].w+" vitórias)":"—")+"\n\n"+rows.slice(0,10).map((r,i)=>(["🥇","🥈","🥉"][i]||(i+1)+".")+" "+r.n+" · "+r.w+"V "+r.l+"D · saldo "+sg(r.bal)).join("\n")+"\n\n👉 "+link;
 }
 async function openShare(kind,data,st){
   const c=$("resCard");
@@ -1201,6 +1207,9 @@ function renderRank(){
   else{$("duo").textContent="—";$("duoSub").textContent="Aparece após a primeira partida."}
   const hist=(st.history||[]);
   const fx=canFix(st);
+  $("pnameTxt").textContent=st.name||pTitle(st);$("pnameTxt").classList.toggle("none",!st.name);
+  $("pnameSub").textContent=st.name?pTitle(st):"";
+  $("pnameBtn").hidden=!fx;$("pnameBtn").textContent=st.name?"✏️ Mudar o nome":"✏️ Dar um nome a esta pelada";
   $("histBody").innerHTML=hist.map((h,i)=>({h,i})).reverse().map(({h,i})=>{
     const chip=h.fix?'<span class="chip fx">✏️ Corrigida</span>':h.ok?'<span class="chip ok">✅ Conferida</span>':'<span class="chip">⏳ A conferir</span>';
     const was=h.orig?'<span class="was">antes: '+esc(h.orig.w)+' venceu '+esc(h.orig.l)+', '+esc(h.orig.s)+'</span>':'';
@@ -1452,6 +1461,21 @@ function renderFix(){
     fixDone(changed?"✏️":"✅",changed?"Partida corrigida: "+W.join(" e ")+" venceu "+L.join(" e ")+", "+ws+" x "+ls+". O ranking foi recalculado e o valor antigo ficou registrado.":"Partida conferida. Nada mudou no ranking.");
   };
 }
+function setPName(v){if(!canFix(S))return;v=String(v||"").trim().replace(/\s+/g," ").slice(0,40);if(v)S.name=v;else delete S.name;save();renderAll()}
+function openPName(){
+  if(!canFix(S))return;const c=$("resCard");
+  c.innerHTML='<div class="big" id="resTitle" style="font-size:1.4rem">🏷️ Nome da pelada</div><span class="sub">Aparece no topo do Ranking e na imagem compartilhada. Ex.: Pelada do Feriado, Desafio de Aniversário do Flávio.</span>'+
+    '<input type="text" id="pnameIn" maxlength="40" autocomplete="off" placeholder="Nome da pelada" aria-label="Nome da pelada">'+
+    '<button class="btn" id="pnameSave" type="button">Salvar nome</button>'+(S.name?'<button class="btn ghost small" id="pnameDel" type="button">Tirar o nome</button>':'')+
+    '<button class="btn ghost" id="pnameX" type="button">Cancelar</button>';
+  $("pnameIn").value=S.name||"";$("sheet").hidden=false;try{$("pnameIn").focus()}catch(e){}
+  const done=v=>{$("sheet").hidden=true;auditDo(()=>setPName(v))};
+  $("pnameSave").onclick=()=>done($("pnameIn").value);
+  $("pnameIn").onkeydown=e=>{if(e.key==="Enter")done($("pnameIn").value)};
+  if(S.name)$("pnameDel").onclick=()=>done("");
+  $("pnameX").onclick=()=>{$("sheet").hidden=true};
+}
+$("pnameBtn").onclick=openPName;
 function fixDone(emo,msg){
   $("resCard").innerHTML='<div class="emo" aria-hidden="true">'+emo+'</div><div class="big" id="resTitle" style="font-size:1.4rem">Auditoria</div><span class="sub"></span><button class="btn" id="fixOk">OK</button>';
   $("resCard").querySelector(".sub").textContent=msg;$("fixOk").onclick=()=>{$("sheet").hidden=true};renderAll();
