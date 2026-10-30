@@ -268,9 +268,13 @@ nav button{font-size:.76rem;color:var(--muted)}
 .side .streak{font-size:.82rem;font-weight:600;color:var(--sand)}
 .deuce{color:var(--danger)}
 .net{background:repeating-linear-gradient(var(--ink) 0 6px,transparent 6px 10px);opacity:.35}
-.roster li:first-child{background:var(--nextbg)}
-.roster li:first-child .pos{color:var(--nextpos)}
-.roster li:first-child .who{color:var(--nextink);font-weight:700}
+.roster li:first-child:not(.solo){background:var(--nextbg)}
+.roster li:first-child:not(.solo) .pos{color:var(--nextpos)}
+.roster li:first-child:not(.solo) .who{color:var(--nextink);font-weight:700}
+.roster li.solo{background:var(--warnbg);border-top:2px dashed var(--warnline)}
+.roster li.solo .pos{color:var(--warn)!important;font-weight:700}
+.roster li.solo .who{color:var(--ink);font-weight:700}
+.roster li.solo{grid-template-columns:122px 1fr;row-gap:2px}.roster li.solo .tag{grid-column:2;justify-self:start}
 .roster .who{font-weight:600}
 .roster li{grid-template-columns:122px 1fr auto}
 .roster .pos{font-size:.95rem}
