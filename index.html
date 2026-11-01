@@ -197,10 +197,24 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .cong{font-family:var(--brand);font-size:1.1rem;color:var(--sand);text-transform:uppercase;letter-spacing:.02em}
 .roast{background:var(--warnbg);border:1px dashed var(--sand);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:1.05rem}
 .roast .k{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--sand);font-weight:600}
+.alert4.l3{background:var(--solobg);color:var(--soloink)}
 .alert4{background:var(--gold-grad);color:var(--gold-ink);border-radius:14px;padding:14px;font-family:var(--brand);font-size:1.3rem;text-transform:uppercase;text-align:center;line-height:1.15}
 .notes{display:flex;flex-direction:column;gap:6px;margin:0;padding-left:18px;font-size:.95rem}
 [hidden]{display:none!important}
 .hbtns{display:flex;gap:6px;justify-content:flex-end}
+.hzsum{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.hzsum span{padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:.86rem;font-weight:600;color:var(--ink)}
+.hzlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.hz{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.hz.live{border:2px solid var(--danger)}
+.hzh{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
+.hzh b{font:400 1.05rem var(--brand);color:var(--title)}
+.hzrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.hzrow .nm{font-size:1.02rem;color:var(--muted);overflow-wrap:anywhere}
+.hzrow .pt{font:400 1.6rem var(--brand);color:var(--muted);min-width:2ch;text-align:right}
+.hzrow.win .nm{color:var(--ink);font-weight:800}.hzrow.win .pt{color:var(--green)}
+.hzrow.win .nm::before{content:"🏆 "}
+html[data-ui="noite"] .hzrow.win .pt{color:var(--greenink)}
 .pname{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:6px 4px 0}
 .pname .k{font:700 .8rem var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .pname .v{font:400 2rem/1.1 var(--brand);color:var(--title);text-transform:uppercase;overflow-wrap:anywhere}
@@ -404,10 +418,20 @@ td{font-weight:500}
       <h2>Fila</h2>
       <ul class="roster" id="queue"></ul>
     </section>
+    <button class="btn ghost" id="btnHistG" type="button">📜 Histórico da pelada</button>
     <section id="inviteWrap" hidden>
       <button class="btn" id="btnInvite">📲 Chamar a galera para esta pelada</button>
       <span class="sub">Gera um link e um QR code que abrem direto nesta quadra.</span>
     </section>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div id="vHist" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="pname"><span class="k">📜 Histórico da pelada</span><span class="v" id="hzTitle"></span><span class="sub" id="hzSub"></span></div>
+    <div class="hzsum" id="hzSum"></div>
+    <ol class="hzlist" id="hzList"></ol>
+    <a class="btn ghost" id="hzWa" target="_blank" rel="noopener">📲 Enviar o histórico no WhatsApp</a>
+    <button class="btn ghost" id="hzBack" type="button">← Voltar</button>
   </div>
 
   <!-- EDIT -->
@@ -463,6 +487,7 @@ td{font-weight:500}
   <!-- RANKING -->
   <div id="vRank" hidden style="display:flex;flex-direction:column;gap:18px">
     <div class="pname" id="pnameBox"><span class="k">Ranking da pelada</span><span class="v" id="pnameTxt"></span><span class="sub" id="pnameSub"></span><button class="btn ghost small" id="pnameBtn" type="button" hidden></button></div>
+    <button class="btn ghost" id="btnHist" type="button">📜 Histórico da pelada · partida a partida</button>
     <div class="crown"><span class="k">Rei da pelada</span><span class="v" id="king">—</span><span class="sub" id="kingSub"></span></div>
     <div class="crown"><span class="k">Dupla da pelada</span><span class="v" id="duo">—</span><span class="sub" id="duoSub"></span></div>
     <div class="seal" id="auditSeal" hidden></div>
@@ -534,7 +559,7 @@ let FS=null, AUTH=null, uid=null, groupMissing=false;
 const GROUP=(window.VDG_GROUP||"guerreiros");
 const GP="groups/"+GROUP+"/";
 function fresh(){return{phase:"setup",date:null,label:"",rev:0,evt:0,lastResult:null,cfg:{target:15,mult:6,limit:2},athletes:[],pairs:{},nextId:1,court:[],queue:[],solo:null,
-  score:[0,0],undo:[],deuce:false,flipped:false,switchPending:false,courtWins:{},streak:{},stats:{},pairStats:{},history:[],ended:false,lastSnap:null,bench:[]}}
+  score:[0,0],undo:[],deuce:false,flipped:false,switchPending:false,courtWins:{},streak:{},lstreak:{},stats:{},pairStats:{},history:[],ended:false,lastSnap:null,bench:[]}}
 const slug=t=>(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)||"quadra";
 const pid=(date,label)=>date+"_"+slug(label);
 const pTitle=st=>(st.label||"Pelada")+" · "+fmtDate(st.date);
@@ -834,6 +859,7 @@ function finishMatch(ws){
   const lkey=[lp.a,lp.b].sort().join(" e ");const lps=S.pairStats[lkey]||(S.pairStats[lkey]={w:0,bal:0});lps.bal-=wsc-lsc;
   S.history.push({w:pName(W),l:pName(L),s:wsc+" x "+lsc,t:Date.now(),wa:[wp.a,wp.b],la:[lp.a,lp.b]});
   S.streak[W]=(S.streak[W]||0)+1;S.courtWins[W]=(S.courtWins[W]||0)+1;S.streak[L]=0;S.courtWins[L]=0;
+  S.lstreak=S.lstreak||{};S.lstreak[L]=(S.lstreak[L]||0)+1;S.lstreak[W]=0;let lose3=false,courtSet=false;
   const r={winner:pName(W),loser:pName(L),score:wsc+" x "+lsc,streak:S.streak[W]};
   if(S.streak[W]>=4){
     big4=true;
@@ -862,9 +888,27 @@ function finishMatch(ws){
       const np=newPair(keep,S.solo);S.queue.push(np);
       notes.push(keep+" forma dupla com "+S.solo+" e vai para o fim da fila. "+other+" fica de fora esperando.");
       S.solo=other;
+    }else if(S.lstreak[L]>=3){
+      // 3 derrotas seguidas: a dupla é desfeita e troca de parceiro com a última dupla da fila
+      lose3=true;const ln=[lp.a,lp.b];
+      notes.push(pName(L)+" perderam 3 seguidas e a dupla foi desfeita.");
+      const X=S.queue.length?S.queue[S.queue.length-1]:null;
+      if(X){
+        const xn=[S.pairs[X].a,S.pairs[X].b],xName=pName(X);const m=remix(ln,xn);
+        S.queue.pop();delete S.pairs[L];delete S.pairs[X];
+        const ids=shuffle([newPair(m[0][0],m[0][1]),newPair(m[1][0],m[1][1])]);S.queue.push(...ids);
+        notes.push("Trocaram de parceiro com "+xName+", a última dupla da fila. Agora são "+ids.map(pName).join(" e ")+", no fim da fila.");
+      }else{
+        // só existem as duas duplas da quadra: a mistura é com a vencedora
+        const wn=[wp.a,wp.b],wName=pName(W);const m=remix(ln,wn);
+        delete S.pairs[L];delete S.pairs[W];
+        S.court=shuffle([newPair(m[0][0],m[0][1]),newPair(m[1][0],m[1][1])]);courtSet=true;
+        notes.push("Como não há dupla na fila, trocaram de parceiro com "+wName+". Novas duplas em quadra: "+S.court.map(pName).join(" x ")+".");
+      }
     }else{S.queue.push(L);notes.push(pName(L)+" vai para o fim da fila.")}
     const lim=effLimit();
-    if(S.courtWins[W]>=lim&&S.queue.length>=2){
+    if(courtSet){}
+    else if(S.courtWins[W]>=lim&&S.queue.length>=2){
       S.court=[S.queue.shift(),S.queue.shift()];S.queue.unshift(W);S.courtWins[W]=0;
       notes.push(pName(W)+" completou "+lim+(lim>1?" vitórias":" vitória")+" e sai. Volta como próxima.");
     }else{
@@ -874,10 +918,12 @@ function finishMatch(ws){
     S.court.forEach(id=>{if(id!==W)S.courtWins[id]=0});
     resetScore();
   }
+  S.lastResult0={lose3};
   S.flipped=false;
   S.evt=(S.evt||0)+1;seenEvt=S.evt;
-  S.lastResult=Object.assign(r,{notes,big4,congrats:pick(CONGRATS),tease:pickTease(wsc,lsc,S.cfg.target)});
-  Object.assign(S.history[S.history.length-1],{c:S.lastResult.congrats,z:S.lastResult.tease,st:S.lastResult.streak,b4:big4});
+  const l3=!!(S.lastResult0&&S.lastResult0.lose3);delete S.lastResult0;
+  S.lastResult=Object.assign(r,{notes,big4,lose3:l3,congrats:pick(CONGRATS),tease:pickTease(wsc,lsc,S.cfg.target)});
+  Object.assign(S.history[S.history.length-1],{c:S.lastResult.congrats,z:S.lastResult.tease,st:S.lastResult.streak,b4:big4},l3?{l3:true}:{});
   showResult(S.lastResult);
 }
 function showResult(r){
@@ -888,7 +934,7 @@ function showResult(r){
     $("btnShareEnd").onclick=()=>shareRanking(S);
     $("sheet").hidden=false;$("btnNext").onclick=()=>{$("sheet").hidden=true;show("vRank")};return;
   }
-  c.innerHTML=(r.big4?'<div class="alert4">4 vitórias seguidas!<br>Dupla desfeita e misturada</div>':"")+
+  c.innerHTML=(r.big4?'<div class="alert4">4 vitórias seguidas!<br>Dupla desfeita e misturada</div>':"")+(r.lose3?'<div class="alert4 l3">3 derrotas seguidas!<br>'+esc(r.loser)+': dupla desfeita</div>':"")+
     '<div class="emo" aria-hidden="true">🏆</div><span class="cong">'+esc(r.congrats)+'</span>'+
     '<div class="big" id="resTitle">'+esc(r.winner)+'</div>'+
     '<div class="score">'+esc(r.score)+(r.streak>1?' · '+r.streak+' seguidas':'')+'</div>'+
@@ -954,7 +1000,13 @@ function benchList(){
 }
 function slotName(s){if(s.t==="p")return S.pairs[s.id][s.k];if(s.t==="s")return S.solo;return benchList()[s.i]}
 const sameSlot=(a,b)=>a&&b&&a.t===b.t&&a.id===b.id&&a.k===b.k&&a.i===b.i;
-function touchPair(id){S.streak[id]=0;S.courtWins[id]=0}
+function touchPair(id){S.streak[id]=0;S.courtWins[id]=0;if(S.lstreak)S.lstreak[id]=0}
+// parceiros que já jogaram juntos nesta pelada
+function pastPartners(){const set=new Set();(S.history||[]).forEach(h=>{[h.wa,h.la].forEach(p=>{if(p&&p.length===2)set.add([canon(p[0]),canon(p[1])].sort().join("|"))})});return set}
+// duas duplas trocam de parceiro; prefere a combinação que repete menos duplas já formadas
+function remix(p,q){const past=pastPartners();const k=(a,b)=>[canon(a),canon(b)].sort().join("|");
+  const opts=shuffle([[[p[0],q[0]],[p[1],q[1]]],[[p[0],q[1]],[p[1],q[0]]]]);
+  opts.sort((x,y)=>x.filter(d=>past.has(k(d[0],d[1]))).length-y.filter(d=>past.has(k(d[0],d[1]))).length);return opts[0]}
 function courtTouched(){ // mexeu em quem está em quadra com jogo rolando
   S.undo=[];S.lastSnap=null;
   if(S.score[0]+S.score[1]>0)scorePending=true;
@@ -1481,6 +1533,39 @@ function fixDone(emo,msg){
   $("resCard").querySelector(".sub").textContent=msg;$("fixOk").onclick=()=>{$("sheet").hidden=true};renderAll();
 }
 
+/* ---------- histórico da pelada (partida a partida) ---------- */
+let histBack="vRank";
+const hhmm=t=>{try{return new Date(t).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}catch(e){return ""}};
+function renderHist(){
+  const st=S,h=st.history||[];
+  $("hzTitle").textContent=st.name||pTitle(st);$("hzSub").textContent=st.name?pTitle(st):"";
+  const {top,pr}=leaders(st);const live=st.phase!=="setup"&&!st.ended&&st.court&&st.court.length===2&&st.pairs[st.court[0]]&&st.pairs[st.court[1]];
+  const sum=[h.length+(h.length===1?" partida":" partidas")];
+  if(h.length)sum.push("🕒 "+hhmm(h[0].t)+" – "+hhmm(h[h.length-1].t));
+  if(top.length)sum.push("👑 "+top.map(r=>r.n).join(" e "));
+  if(pr.length)sum.push("🤝 "+pr[0][0]);
+  $("hzSum").innerHTML=sum.map(x=>'<span>'+esc(x)+'</span>').join("");
+  const item=(x,i)=>{const [ws,ls]=x.s.split(" x ");const ch=[];
+    if(x.st>1)ch.push('<span class="chip">🔥 '+x.st+' seguidas</span>');
+    if(x.b4)ch.push('<span class="chip fx">💥 4 vitórias: duplas misturadas</span>');
+    if(x.l3)ch.push('<span class="chip fx">🔄 3 derrotas: dupla desfeita</span>');
+    if(x.fix)ch.push('<span class="chip fx">✏️ Corrigida</span>');else if(x.ok)ch.push('<span class="chip ok">✅ Conferida</span>');
+    return '<li class="hz"><div class="hzh"><b>#'+(i+1)+'</b><span>'+esc(hhmm(x.t))+'</span>'+ch.join("")+'</div>'+
+      '<div class="hzrow win"><span class="nm">'+esc(x.w)+'</span><span class="pt">'+esc(ws)+'</span></div>'+
+      '<div class="hzrow"><span class="nm">'+esc(x.l)+'</span><span class="pt">'+esc(ls)+'</span></div></li>'};
+  let html=h.map(item).join("");
+  if(live)html+='<li class="hz live"><div class="hzh"><b>#'+(h.length+1)+'</b><span class="chip" style="color:var(--danger);border-color:var(--danger)">🔴 Em andamento</span></div>'+
+    '<div class="hzrow"><span class="nm">'+esc(pName(st.court[0]))+'</span><span class="pt">'+st.score[0]+'</span></div>'+
+    '<div class="hzrow"><span class="nm">'+esc(pName(st.court[1]))+'</span><span class="pt">'+st.score[1]+'</span></div></li>';
+  $("hzList").innerHTML=html||'<li class="sub" style="text-align:center">Nenhuma partida jogada ainda.</li>';
+  const txt="📜 Histórico · Vôlei dos Guerreiros\n"+(st.name?st.name+" · ":"")+pTitle(st)+"\n\n"+
+    h.map((x,i)=>"#"+(i+1)+" "+hhmm(x.t)+" · "+x.w+" "+x.s+" "+x.l+(x.b4?" 💥":"")+(x.l3?" 🔄":"")).join("\n")+
+    (top.length?"\n\n👑 Rei: "+top.map(r=>r.n).join(" e "):"")+(pr.length?"\n🤝 Dupla: "+pr[0][0]:"");
+  $("hzWa").href="https://wa.me/?text="+encodeURIComponent(txt);$("hzWa").hidden=!h.length;
+}
+$("btnHist").onclick=()=>show("vHist");$("btnHistG").onclick=()=>show("vHist");
+$("hzBack").onclick=()=>show(histBack&&histBack!=="vHist"?histBack:"vRank");
+
 /* ---------- tema claro/escuro ---------- */
 function uiLabel(){const n=document.documentElement.dataset.ui==="noite";$("uiBtn").textContent=n?"☀️ Modo sol":"🌙 Noite";$("uiBtn").setAttribute("aria-label",n?"Usar o modo sol (claro)":"Usar o modo noite (escuro)")}
 $("uiBtn").onclick=()=>{const n=document.documentElement.dataset.ui==="noite"?"sol":"noite";document.documentElement.dataset.ui=n;try{localStorage.setItem("vdg_ui",n)}catch(e){}uiLabel()};
@@ -1547,7 +1632,7 @@ function show(v){
   if(!canWrite&&(v==="vSetup"||v==="vEdit"))v=S.phase==="setup"?"vWait":"vGame";
   if(!canWrite&&!curId&&v!=="vFirst")v="vWait";
   if(v==="vGame"&&S.phase==="setup")v=canWrite?"vSetup":"vWait";
-  view=v;["vSetup","vGame","vEdit","vRank","vWait","vUso","vFirst"].forEach(x=>$(x).hidden=x!==v);
+  view=v;if(v==="vHist"&&view!=="vHist")histBack=view;["vSetup","vGame","vEdit","vRank","vWait","vUso","vHist","vFirst"].forEach(x=>$(x).hidden=x!==v);
   try{localStorage.setItem("vdg_view",v)}catch(e){};window.scrollTo(0,0);renderAll()}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{sel=null;show(b.dataset.v)});
 function renderAll(){
@@ -1558,7 +1643,7 @@ function renderAll(){
   $("tabs").hidden=groupMissing||(canWrite?!live:false);
   $("hdrInfo").textContent=live?pTitle(S)+" · "+S.athletes.length+" atletas · sai com "+effLimit():(remote?"Pelada online":"");
   renderRole();
-  renderPicker();renderWait();renderSetup();renderGame();renderEdit();renderRank();if(view==="vUso")renderUso();
+  renderPicker();renderWait();renderSetup();renderGame();renderEdit();renderRank();if(view==="vUso")renderUso();if(view==="vHist")renderHist();
   $("btnUsoSetup").hidden=!isAdmin||!usoIds(9999).length||S.phase!=="setup";
   if(isAdmin&&view==="vUso")$("tabs").hidden=false;
   if(!canWrite&&view==="vWait"&&live&&curId)show("vGame");
